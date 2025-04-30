@@ -216,7 +216,7 @@ if __name__ == '__main__':
         closed_loop_square.move_custom_distance(1.0, 0.3)
         rospy.sleep(2.0)
         closed_loop_square.move_custom_distance(-1.0, 0.3)
-        rospy.sleep()
+        rospy.sleep(2.0)
         closed_loop_square.move_custom_distance(1.0, 0.6)
         rospy.sleep(2.0)
         closed_loop_square.move_custom_distance(-1.0, 0.6)
