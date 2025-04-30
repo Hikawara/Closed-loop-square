@@ -182,13 +182,52 @@ class ClosedLoopSquare:
             if self.tasks:
                 self.break_start = rospy.Time.now()
 
+    def move_custom_distance(self, distance_meters, speed):
+ 
+        rospy.loginfo(f"Starting custom move: {distance_meters} meters at {speed} m/s")
+
+        # Calculate how many encoder ticks are needed for the distance
+        target_ticks = int(distance_meters * self.ticks_per_meter)
+        start_ticks = self.right_ticks
+        rate = rospy.Rate(100)  # 100 Hz loop
+
+        while not rospy.is_shutdown():
+            current_ticks = self.right_ticks - start_ticks
+            if abs(current_ticks) >= abs(target_ticks):
+                rospy.loginfo("Custom move complete.")
+                break
+
+            direction = 1 if target_ticks - current_ticks > 0 else -1
+            self.cmd_msg.header.stamp = rospy.Time.now()
+            self.cmd_msg.v = abs(speed) * direction
+            self.cmd_msg.omega = 0.0
+            self.pub.publish(self.cmd_msg)
+            rate.sleep()
+
+        self.stop_robot()
+
+
     def run(self):
         rospy.spin()
 
 if __name__ == '__main__':
     try:
-        node = ClosedLoopSquare()
-        node.run()
+        closed_loop_square = ClosedLoopSquare()
+        
+        # Give some time for the ROS system to settle
+        rospy.sleep(2.0)
+
+        # Demonstrate forward motion: 1 meter at 0.3 m/s
+        closed_loop_square.move_custom_distance(1.0, 0.3)
+        
+        # Pause before next movement
+        rospy.sleep(2.0)
+
+        # Demonstrate backward motion: -0.5 meter at 0.2 m/s
+        closed_loop_square.move_custom_distance(-0.5, 0.2)
+
+        # Then enter spin loop to keep node alive
+        closed_loop_square.run()
     except rospy.ROSInterruptException:
         pass
     except Exception as e:
