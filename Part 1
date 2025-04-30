@@ -90,45 +90,6 @@ class ClosedLoopSquare:
 
     def left_encoder_callback(self, msg):
         self.left_ticks = msg.data
-
-
-    def move_distance(self, ticks, start):
-        # Calculate progress and direction
-        current_ticks = self.right_ticks - start
-        remaining_ticks = ticks - current_ticks
-        
-        # Check if we've reached target (in either direction)
-        if abs(current_ticks) >= abs(ticks):
-            rospy.loginfo("Move complete")
-            self.stop_robot()
-            return True
-        
-        # Move in appropriate direction
-        direction = 1 if remaining_ticks > 0 else -1
-        self.cmd_msg.header.stamp = rospy.Time.now()
-        self.cmd_msg.v = self.linear_speed * direction
-        self.cmd_msg.omega = 0.0
-        self.pub.publish(self.cmd_msg)
-        return False
-    
-    def turn_90_deg(self, ticks, start):
-        # Calculate progress and direction
-        current_ticks = self.right_ticks - start
-        remaining_ticks = ticks - current_ticks
-        
-        # Check if we've reached target angle (in either direction)
-        if abs(current_ticks) >= abs(ticks):
-            rospy.loginfo("Turn complete")
-            self.stop_robot()
-            return True
-        
-        # Turn in appropriate direction
-        direction = 1 if remaining_ticks > 0 else -1
-        self.cmd_msg.header.stamp = rospy.Time.now()
-        self.cmd_msg.v = 0.0
-        self.cmd_msg.omega = self.angular_speed * direction
-        self.pub.publish(self.cmd_msg)
-        return False
     
     def timer_callback(self, event):
         if not self.is_running:
