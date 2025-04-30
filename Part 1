@@ -191,20 +191,21 @@ class ClosedLoopSquare:
 if __name__ == '__main__':
     try:
         closed_loop_square = ClosedLoopSquare()
-        
-        # Give some time for the ROS system to settle
-        rospy.sleep(2.0)
+        rospy.sleep(2.0)  # Allow ROS to initialize
 
-        # Demonstrate forward motion: 1 meter at 0.3 m/s
+        # Forward and back at 0.3 m/s
         closed_loop_square.move_custom_distance(1.0, 0.3)
-        
-        # Pause before next movement
+        rospy.sleep(1.0)
+        closed_loop_square.move_custom_distance(-1.0, 0.3)
+
         rospy.sleep(2.0)
 
-        # Demonstrate backward motion: -0.5 meter at 0.2 m/s
-        closed_loop_square.move_custom_distance(-0.5, 0.2)
+        # Forward and back at 0.6 m/s
+        closed_loop_square.move_custom_distance(1.0, 0.6)
+        rospy.sleep(1.0)
+        closed_loop_square.move_custom_distance(-1.0, 0.6)
 
-        # Then enter spin loop to keep node alive
+        # Keep node alive
         closed_loop_square.run()
     except rospy.ROSInterruptException:
         pass
