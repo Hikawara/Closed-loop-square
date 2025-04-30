@@ -209,9 +209,6 @@ class ClosedLoopSquare:
 
 if __name__ == '__main__':
     try:
-        closed_loop_square = ClosedLoopSquare()
-        
-        rospy.sleep(2.0)
 
         closed_loop_square.move_custom_distance(1.0, 0.3)
         rospy.sleep(2.0)
