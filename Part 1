@@ -40,17 +40,6 @@ class ClosedLoopSquare:
         self.current_task = None
         self.is_running = False
 
-        # Task queue to make a square
-        for i in range(4):
-            self.tasks.append({
-                'action': 'move',
-                'ticks': self.ticks_per_meter
-            })
-            self.tasks.append({
-                'action': 'turn',
-                'ticks': self.ticks_per_90_deg
-            })
-
         # Initialize timer
         timer_period = 0.01
         rospy.Timer(rospy.Duration(timer_period), self.timer_callback)
@@ -126,6 +115,18 @@ class ClosedLoopSquare:
             
             if self.tasks:  # More tasks remaining
                 self.break_start = rospy.Time.now()
+        # Define custom sequence of actions (angle, speed)
+            self.task_sequence = [
+                ('rotate', 90, 0.5),
+                ('rotate', -90, 0.5),
+                ('rotate', 90, 1.0),
+                ('rotate', -90, 1.0),
+                ('move', 0.5, 0.3),
+                ('move', 0.5, 0.6),
+            ]
+            self.current_task_index = 0
+            self.executing = False
+
 
     def move_custom_distance(self, distance_meters, speed):
 
@@ -170,16 +171,6 @@ class ClosedLoopSquare:
 
 if __name__ == '__main__':
     try:
-
-        closed_loop_square.move_custom_distance(1.0, 0.3)
-        rospy.sleep(2.0)
-        closed_loop_square.move_custom_distance(-1.0, 0.3)
-        rospy.sleep(2.0)
-        closed_loop_square.move_custom_distance(1.0, 0.6)
-        rospy.sleep(2.0)
-        closed_loop_square.move_custom_distance(-1.0, 0.6)
-
-
         closed_loop_square.run()
     except rospy.ROSInterruptException:
         pass
