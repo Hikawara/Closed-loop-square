@@ -50,11 +50,10 @@ class ClosedLoopSquare:
             self.tasks = []
 
             side_length = 0.5  # meters
-            angular_speed = 8.5
-
-            for _ in range(4):
-                self.add_move_task(side_length)
-                self.add_turn_task(90, angular_speed)
+            
+            self.add_move_task(side_length)
+            self.add_turn_task(360, angular_speed = 5)
+            self.add_turn_task(360, angular_speed = 10)
 
     def stop_robot(self):
         self.cmd_msg.header.stamp = rospy.Time.now()
