@@ -53,7 +53,7 @@ class ClosedLoopSquare:
             
             self.add_turn_task(360, angular_speed=5)
             self.add_wait_task(2.0)  # wait 2 seconds
-            self.add_turn_task(360, angular_speed=10)
+            self.add_turn_task(360, angular_speed=7)
 
             
     def stop_robot(self):
