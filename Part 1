@@ -19,8 +19,8 @@ class ClosedLoopSquare:
         rospy.Subscriber('/birdie/fsm_node/mode', FSMState, self.fsm_callback, queue_size=1)
         
         # Calibration constants
-        self.ticks_per_meter = 545
-        self.ticks_per_90_deg = 50  # UPDATED
+        self.ticks_per_meter = 345
+        self.ticks_per_90_deg = 100  # UPDATED
 
         # Default control speeds
         self.linear_speed = 0.5
