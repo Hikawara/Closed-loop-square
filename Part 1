@@ -20,7 +20,7 @@ class ClosedLoopSquare:
 
         # Calibration constants
         self.ticks_per_meter = 545
-        self.ticks_per_90_deg = 50  # UPDATED
+        self.ticks_per_90_deg = 50  # 360 deg = 200 ticks
 
         # Default control speeds
         self.linear_speed = 0.5
@@ -31,7 +31,6 @@ class ClosedLoopSquare:
         self.break_start = None
 
         self.tasks = []
-
         self.current_task = None
         self.is_running = False
 
@@ -54,7 +53,6 @@ class ClosedLoopSquare:
             self.tasks.append({'action': 'wait', 'duration': rospy.Duration(2.0)})
             self.add_turn_task(360, angular_speed=7)
 
-
     def stop_robot(self):
         self.cmd_msg.header.stamp = rospy.Time.now()
         self.cmd_msg.v = 0.0
@@ -68,21 +66,29 @@ class ClosedLoopSquare:
         self.left_ticks = msg.data
 
     def timer_callback(self, event):
-         if not self.is_running:
+        if not self.is_running:
             return
 
-        if self.break_start is not None:
-            if (rospy.Time.now() - self.break_start) < self.break_time:
-                return
-            self.break_start = None
-
         if self.current_task is None:
+            if self.break_start is not None:
+                if (rospy.Time.now() - self.break_start) < self.break_time:
+                    return
+                self.break_start = None
+
             if not self.tasks:
-                rospy.loginfo("Square pattern completed!")
+                rospy.loginfo("Pattern completed!")
                 self.is_running = False
                 return
 
             self.current_task = self.tasks.pop(0)
+
+            if self.current_task['action'] == 'wait':
+                rospy.loginfo(f"Waiting for {self.current_task['duration'].to_sec()} seconds...")
+                self.break_start = rospy.Time.now()
+                self.break_time = self.current_task['duration']
+                self.current_task = None
+                return
+
             self.current_task['start'] = self.right_ticks
             rospy.loginfo(f"Starting task: {self.current_task['action']}")
 
@@ -98,16 +104,8 @@ class ClosedLoopSquare:
         if task_complete:
             self.current_task = None
             self.stop_robot()
-            if self.tasks:
+            if self.tasks and self.tasks[0]['action'] != 'wait':
                 self.break_start = rospy.Time.now()
-
-        if self.current_task['action'] == 'wait':
-            rospy.loginfo(f"Waiting for {self.current_task['duration'].to_sec()} seconds...")
-            self.break_start = rospy.Time.now()
-            self.break_time = self.current_task['duration']
-            self.current_task = None
-            return
-
 
     def add_move_task(self, distance, speed=None):
         if speed is None:
@@ -116,7 +114,7 @@ class ClosedLoopSquare:
         direction = 1 if distance >= 0 else -1
         self.tasks.append({
             'action': 'move',
-             'ticks': ticks,
+            'ticks': ticks,
             'speed': abs(speed) * direction
         })
 
@@ -136,7 +134,7 @@ class ClosedLoopSquare:
         if moved_ticks >= self.current_task['ticks']:
             return True
         self.cmd_msg.header.stamp = rospy.Time.now()
-         self.cmd_msg.v = self.current_task['speed']
+        self.cmd_msg.v = self.current_task['speed']
         self.cmd_msg.omega = 0.0
         self.pub.publish(self.cmd_msg)
         return False
