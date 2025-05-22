@@ -9,7 +9,7 @@ class ClosedLoopSquare:
         self.cmd_msg = Twist2DStamped()
         rospy.init_node('closed_loop_square_node', anonymous=True)
         rospy.loginfo("Node initialized")
-        
+
         self.left_ticks = 0
         self.right_ticks = 0
 
@@ -17,7 +17,7 @@ class ClosedLoopSquare:
         rospy.Subscriber('/birdie/right_wheel_encoder_node/tick', WheelEncoderStamped, self.encoder_callback)
         rospy.Subscriber('/birdie/left_wheel_encoder_node/tick', WheelEncoderStamped, self.left_encoder_callback)
         rospy.Subscriber('/birdie/fsm_node/mode', FSMState, self.fsm_callback, queue_size=1)
-        
+
         # Calibration constants
         self.ticks_per_meter = 545
         self.ticks_per_90_deg = 50  # UPDATED
@@ -43,20 +43,18 @@ class ClosedLoopSquare:
             self.is_running = False
             self.stop_robot()
         elif msg.state == "LANE_FOLLOWING":
-            rospy.loginfo("Starting square pattern")
+            rospy.loginfo("Starting circular motion pattern")
             self.is_running = True
             self.current_task = None
             self.break_start = None
             self.tasks = []
+    
+            # Add two full 360-degree turns at different speeds
+            self.add_turn_task(360, angular_speed=5)
+            self.tasks.append({'action': 'wait', 'duration': rospy.Duration(2.0)})
+            self.add_turn_task(360, angular_speed=7)
 
-            side_length = 0.5  # meters
 
-            for i in range (1):
-                self.add_turn_task(360, angular_speed=5)
-                self.add_wait_task(2.0)  # wait 2 seconds
-                self.add_turn_task(360, angular_speed=7)
-                self.add_wait_task(2.0)  # wait 2 seconds
-            
     def stop_robot(self):
         self.cmd_msg.header.stamp = rospy.Time.now()
         self.cmd_msg.v = 0.0
@@ -70,7 +68,7 @@ class ClosedLoopSquare:
         self.left_ticks = msg.data
 
     def timer_callback(self, event):
-        if not self.is_running:
+         if not self.is_running:
             return
 
         if self.break_start is not None:
@@ -97,19 +95,19 @@ class ClosedLoopSquare:
                 self.current_task['start_right'] = self.right_ticks
             task_complete = self.turn_ticks()
 
-        elif self.current_task['action'] == 'wait':
-            if self.current_task['start_time'] is None:
-                self.current_task['start_time'] = rospy.Time.now()
-                rospy.loginfo(f"Waiting for {self.current_task['duration'].to_sec()} seconds")
-
-            if rospy.Time.now() - self.current_task['start_time'] >= self.current_task['duration']:
-                task_complete = True
-
         if task_complete:
             self.current_task = None
             self.stop_robot()
             if self.tasks:
                 self.break_start = rospy.Time.now()
+
+        if self.current_task['action'] == 'wait':
+            rospy.loginfo(f"Waiting for {self.current_task['duration'].to_sec()} seconds...")
+            self.break_start = rospy.Time.now()
+            self.break_time = self.current_task['duration']
+            self.current_task = None
+            return
+
 
     def add_move_task(self, distance, speed=None):
         if speed is None:
@@ -118,7 +116,7 @@ class ClosedLoopSquare:
         direction = 1 if distance >= 0 else -1
         self.tasks.append({
             'action': 'move',
-            'ticks': ticks,
+             'ticks': ticks,
             'speed': abs(speed) * direction
         })
 
@@ -138,7 +136,7 @@ class ClosedLoopSquare:
         if moved_ticks >= self.current_task['ticks']:
             return True
         self.cmd_msg.header.stamp = rospy.Time.now()
-        self.cmd_msg.v = self.current_task['speed']
+         self.cmd_msg.v = self.current_task['speed']
         self.cmd_msg.omega = 0.0
         self.pub.publish(self.cmd_msg)
         return False
@@ -160,14 +158,6 @@ class ClosedLoopSquare:
 
     def run(self):
         rospy.spin()
-
-    def add_wait_task(self, duration):
-        self.tasks.append({
-            'action': 'wait',
-            'duration': rospy.Duration(duration),
-            'start_time': None
-        })
-
 
 if __name__ == '__main__':
     try:
