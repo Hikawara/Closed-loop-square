@@ -18,7 +18,7 @@ class ClosedLoopSquare:
         rospy.Subscriber('/birdie/right_wheel_encoder_node/tick', WheelEncoderStamped, self.encoder_callback)
         rospy.Subscriber('/birdie/left_wheel_encoder_node/tick', WheelEncoderStamped, self.left_encoder_callback)
         rospy.Subscriber('/birdie/fsm_node/mode', FSMState, self.fsm_callback, queue_size=1)
-        rospy.Subscriber('/birdie/tof_driver_node/range', Range, self.tof_callback)  # TOF sensor subscriber
+        rospy.Subscriber('/birdie/front_center_tof_driver_node/range', Range, self.tof_callback)
 
         # Calibration constants
         self.ticks_per_meter = 545
